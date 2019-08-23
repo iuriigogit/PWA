@@ -1,41 +1,17 @@
-var CACHE = 'network-or-cache';
+var CACHE_NAME = 'my-site-cache-v1';
+var urlsToCache = [
+  '/',
+  '/styles/main.css',
+  '/script/main.js'
+];
 
-// On install, cache some resource.
-self.addEventListener('install', function(evt) {
-  console.log('The service worker is being installed.');
-
-  // Ask the service worker to keep installing until the returning promise
-  // resolves.
-  evt.waitUntil(precache());
+self.addEventListener('install', function(event) {
+  // Perform install steps
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(function(cache) {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
 });
-
-// On fetch, use cache but update the entry with the latest contents
-// from the server.
-self.addEventListener('fetch', function(evt) {
-  console.log('The service worker is serving the asset.');
-  // Try network and if it fails, go for the cached copy.
-  evt.respondWith(fromNetwork(evt.request, 400).catch(function () {
-    return fromCache(evt.request);
-  }));
-});
-
-// Open a cache and use `addAll()` with an array of assets to add all of them
-// to the cache. Return a promise resolving when all the assets are added.
-function precache() {
-  return caches.open(CACHE).then(function (cache) {
-    return cache.addAll([
-      './index.html'
-    ]);
-  });
-}
-
-// Open the cache where the assets were stored and search for the requested
-// resource. Notice that in case of no matching, the promise still resolves
-// but it does with `undefined` as value.
-function fromCache(request) {
-  return caches.open(CACHE).then(function (cache) {
-    return cache.match(request).then(function (matching) {
-      return matching || Promise.reject('no-match');
-    });
-  });
-}
